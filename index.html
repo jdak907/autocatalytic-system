@@ -5,90 +5,136 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>The Autocatalytic System</title>
 <style>
-  html, body { margin:0; height:100%; background:#000; color:#fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
-  #app { position:fixed; inset:0; }
+  :root {
+    --crt-green: #00FF8C;
+    --crt-green-dark: #00A67E;
+    --glow-primary: rgba(0,255,140,0.6);
+    --glow-secondary: rgba(0,166,126,0.6);
+    --text-glow: 0 0 4px var(--glow-primary), 0 0 8px var(--glow-primary), 0 0 12px var(--glow-primary), 0 0 16px var(--glow-primary);
+    --equation-glow: 0 0 4px rgba(0,166,126,1.0), 0 0 8px rgba(0,166,126,0.9), 0 0 12px rgba(0,166,126,0.8), 0 0 16px rgba(0,166,126,0.7), 0 0 24px rgba(0,166,126,0.6);
+  }
+
+  html, body { 
+    margin: 0; 
+    height: 100%; 
+    background: #000; 
+    color: #fff; 
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  }
+  
+  #app { 
+    position: fixed; 
+    inset: 0; 
+  }
 
   .hud { 
-    position: fixed; inset: 0; pointer-events: none; 
-    display: flex; flex-direction: column; padding: 20px; gap: 0;
+    position: fixed; 
+    inset: 0; 
+    pointer-events: none; 
+    display: flex; 
+    flex-direction: column; 
+    padding: 20px; 
+    gap: 0;
     justify-content: space-between;
   }
   
-  /* Add a container just for titles with tighter spacing */
   .title-container {
     display: flex;
     flex-direction: column;
     gap: 0;
   }
   
-  /* BIGGER TITLE - CRT GREEN */
   .title { 
-    justify-self: flex-start; text-align: left; 
-    font-size: 40px; font-weight: 700; letter-spacing: 0.05em;
-    color: #00FF8C; /* CRT GREEN (Cyan Green) */
-    text-shadow: 
-      0 0 4px rgba(0,255,140,0.6),
-      0 0 8px rgba(0,255,140,0.54),
-      0 0 12px rgba(0,255,140,0.48),
-      0 0 16px rgba(0,255,140,0.42);
+    justify-self: flex-start; 
+    text-align: left; 
+    font-size: 40px; 
+    font-weight: 700; 
+    letter-spacing: 0.05em;
+    color: var(--crt-green);
+    text-shadow: var(--text-glow);
     opacity: 1 !important;
-    line-height: 1.1; /* Add tighter line spacing */
-    margin: 0; /* Remove any default margins */
+    line-height: 1.1;
+    margin: 0;
   }
 
-  /* EQUATIONS - LEFT SIDE - NO BOXES - CRT GREEN */
   .equations-container {
     justify-self: flex-start; 
-    display: flex; flex-direction: column; gap: 12px;
-    opacity: 1 !important; align-self: flex-start;
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px;
+    opacity: 1 !important; 
+    align-self: flex-start;
   }
+  
   .equations { 
-    font-size: 30px; line-height: 1.6; text-align: left;
-    color: #00A67E; /* CRT GREEN (updated) */
-    text-shadow: 
-      0 0 4px rgba(0,166,126,1.0),   /* Tight, intense glow */
-      0 0 8px rgba(0,166,126,0.9),   /* Near glow */
-      0 0 12px rgba(0,166,126,0.8),  /* Mid glow */
-      0 0 16px rgba(0,166,126,0.7),  /* Far glow */
-      0 0 24px rgba(0,166,126,0.6);  /* Ambient glow */
+    font-size: 30px; 
+    line-height: 1.6; 
+    text-align: left;
+    color: var(--crt-green-dark);
+    text-shadow: var(--equation-glow);
     opacity: 1 !important;
-    /* NO BORDER, NO BACKGROUND, NO PADDING */
   }
 
-  /* CAPTION - BOTTOM CENTER - CRT GREEN */
   .caption { 
     text-align: center; 
-    opacity: 0; transition: opacity .35s ease; 
+    opacity: 0; 
+    transition: opacity 0.35s ease; 
     font-size: 30px; 
-    color: #00A67E; /* CRT GREEN (updated) */
-    text-shadow: 
-      0 0 4px rgba(0,166,126,0.6),
-      0 0 8px rgba(0,166,126,0.54),
-      0 0 12px rgba(0,166,126,0.48),
-      0 0 16px rgba(0,166,126,0.42);
+    color: var(--crt-green-dark);
+    text-shadow: var(--text-glow);
     margin: 0 auto;
   }
 
-  .badge { position: fixed; top: 16px; left: 16px; font-size: 12px; opacity: .8; letter-spacing: .08em;
-    background: rgba(16,32,48,.3); padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(120,220,255,.25); backdrop-filter: blur(6px);
-    box-shadow: 0 0 14px rgba(120,220,255,.18); }
-  .controls { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; pointer-events: all; }
-  .btn { font-size: 12px; color: #cfefff; background: rgba(16,32,48,.35); border: 1px solid rgba(120,220,255,.35);
-    padding: 6px 10px; border-radius: 999px; cursor: pointer; transition: .2s ease; user-select: none;
-    box-shadow: 0 0 10px rgba(120,220,255,.15), inset 0 0 10px rgba(120,220,255,.08); }
-  .btn:hover { background: rgba(20,40,60,.55); color: #fff; }
-  .btn:focus { outline: 2px solid rgba(120,220,255,0.6); outline-offset: 2px; }
+  .controls { 
+    position: fixed; 
+    top: 16px; 
+    right: 16px; 
+    display: flex; 
+    gap: 8px; 
+    pointer-events: all; 
+  }
+  
+  .btn { 
+    font-size: 12px; 
+    color: #cfefff; 
+    background: rgba(16,32,48,0.35); 
+    border: 1px solid rgba(120,220,255,0.35);
+    padding: 6px 10px; 
+    border-radius: 999px; 
+    cursor: pointer; 
+    transition: 0.2s ease; 
+    user-select: none;
+    box-shadow: 0 0 10px rgba(120,220,255,0.15), inset 0 0 10px rgba(120,220,255,0.08); 
+  }
+  
+  .btn:hover { 
+    background: rgba(20,40,60,0.55); 
+    color: #fff; 
+  }
+  
+  .btn:focus { 
+    outline: 2px solid rgba(120,220,255,0.6); 
+    outline-offset: 2px; 
+  }
 
   .crt {
-    position: fixed; inset: 0; pointer-events: none; z-index: 2;
+    position: fixed; 
+    inset: 0; 
+    pointer-events: none; 
+    z-index: 2;
     background:
       radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.75) 100%),
       repeating-linear-gradient(to bottom, rgba(255,255,255,0.04) 0, rgba(255,255,255,0.04) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
     mix-blend-mode: screen;
-    opacity: .25;
+    opacity: 0.25;
     animation: crtFlicker 3.5s infinite steps(60, end);
   }
-  @keyframes crtFlicker { 0% { opacity:.24 } 50%{ opacity:.28 } 100%{ opacity:.24 } }
+  
+  @keyframes crtFlicker { 
+    0% { opacity: 0.24 } 
+    50% { opacity: 0.28 } 
+    100% { opacity: 0.24 } 
+  }
 </style>
 
 <script>
@@ -138,19 +184,21 @@
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
 
+// DOM Elements - cached for performance
 const app = document.getElementById('app');
 const captionEl = document.getElementById('caption');
 const eqBox1 = document.getElementById('eqBox1');
 const eqBox2 = document.getElementById('eqBox2');
-const restartBtn = document.getElementById('restartBtn');
-const voiceBtn = document.getElementById('voiceBtn');
 
 /* ========= MathJax ========= */
-let mathReady = false;
 // Robust MathJax typeset helper: call typeset when available, otherwise retry once voices/mathjax load
 async function ensureTypeset(nodes){
   if (!window.MathJax || !MathJax.typesetPromise) return;
-  try { await MathJax.typesetPromise(nodes || []); mathReady = true; } catch(e){ mathReady = false; }
+  try { 
+    await MathJax.typesetPromise(nodes || []); 
+  } catch(e){ 
+    console.warn('MathJax typeset failed:', e); 
+  }
 }
 window.addEventListener("load", () => { ensureTypeset(); });
 
@@ -188,10 +236,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initialize voice button UI to persisted state
-  const voiceBtn = document.getElementById('voiceBtn');
-  if (voiceBtn) {
-    voiceBtn.innerHTML = speakOn ? 'Voice: On 🔊' : 'Voice: Off 🔇';
-    voiceBtn.setAttribute('aria-pressed', speakOn ? 'true' : 'false');
+  const voiceBtnEl = document.getElementById('voiceBtn');
+  if (voiceBtnEl) {
+    voiceBtnEl.innerHTML = speakOn ? 'Voice: On 🔊' : 'Voice: Off 🔇';
+    voiceBtnEl.setAttribute('aria-pressed', speakOn ? 'true' : 'false');
   }
 });
 
@@ -232,15 +280,20 @@ if ('speechSynthesis' in window) {
 /* ========= Three.js ========= */
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+  renderer = new THREE.WebGLRenderer({ 
+    antialias: true, 
+    alpha: false,
+    powerPreference: "high-performance"
+  });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 1);
   app.appendChild(renderer.domElement);
 } catch(e) {
+  console.error('WebGL initialization failed:', e);
   // WebGL not available - show fallback message
   const msg = document.createElement('div');
-  msg.style.position='fixed'; msg.style.inset='0'; msg.style.display='flex'; msg.style.alignItems='center'; msg.style.justifyContent='center'; msg.style.background='#000'; msg.style.color='#fff'; msg.style.padding='20px';
+  msg.style.cssText = 'position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; color:#fff; padding:20px;';
   msg.innerHTML = '<div style="max-width:720px;text-align:center;">This visualization requires WebGL. Please enable WebGL or try a modern browser.</div>';
   app.appendChild(msg);
 }
@@ -322,9 +375,6 @@ scene.add(grid);
 // Axes with subtle glow matching text/equation glow
 const [xAxis, xHalo] = glowLine([new THREE.Vector3(-4.8,0,0), new THREE.Vector3(4.8,0,0)], 0xa8f6ff, 0.45, 0.28, 0.010);
 const [yAxis, yHalo] = glowLine([new THREE.Vector3(0,-3,0), new THREE.Vector3(0,3,0)], 0xa8f6ff, 0.45, 0.28, 0.010);
-// Outer soft glow for axes (wider, lower opacity)
-const [xAxis2, xHalo2] = glowLine([new THREE.Vector3(-4.8,0,0), new THREE.Vector3(4.8,0,0)], 0xa8f6ff, 0.25, 0.12, 0.018);
-const [yAxis2, yHalo2] = glowLine([new THREE.Vector3(0,-3,0), new THREE.Vector3(0,3,0)], 0xa8f6ff, 0.25, 0.12, 0.018);
 
 (function addTicks(){
   for (let i=-4;i<=4;i++){
@@ -334,17 +384,32 @@ const [yAxis2, yHalo2] = glowLine([new THREE.Vector3(0,-3,0), new THREE.Vector3(
 })();
 
 /* ========= Simulation & Curves ========= */
+// Constants for better maintainability
+const SIMULATION_CONSTANTS = {
+  CENTER_X: -4.5/2,
+  X_MAX: 4.5,
+  Y_MAX: 3.0,
+  Y_MIN: -3.0,
+  SIMULATION_POINTS: 260,
+  CURVE_WIDTH: 0.02,
+  HALO_MULTIPLIER: 1.5
+};
+
 function smooth(u){ return u<0?0:u>1?1:(u*u*(3-2*u)); }
-const centerX = -4.5/2;
+
 function xyFromNormalized(x01, y01){
-  const Xmax=4.5, Ymax=3.0, Ymin=-3.0;
-  return [centerX + Xmax*x01, Ymin + (Ymax - Ymin)*y01];
+  const { CENTER_X, X_MAX, Y_MAX, Y_MIN } = SIMULATION_CONSTANTS;
+  return [CENTER_X + X_MAX*x01, Y_MIN + (Y_MAX - Y_MIN)*y01];
 }
 
-function simulateCoupled(N=260){
+function simulateCoupled(N = SIMULATION_CONSTANTS.SIMULATION_POINTS){
   const I = new Array(N).fill(0), K = new Array(N).fill(0), E = new Array(N).fill(0), A = new Array(N).fill(0),
         C = new Array(N).fill(0), D = new Array(N).fill(0), P = new Array(N).fill(0);
+  
+  // Initial conditions
   I[0]=0.12; K[0]=0.78; E[0]=0.14; A[0]=0.15; C[0]=0.16; D[0]=0.14;
+  
+  // Simulation parameters
   const r=0.015, p_eff=0.65, k_relax=0.04, K_target0=0.56, k_raise_I=0.0025, k_raise_P=0.0035;
   const a_growth=0.010, a_sat=1.0, a_boost=0.0008, c_invest=0.020, c_dep=0.004;
   const d_acc=0.018, d_decay=0.003, e_in=0.004, e_use=0.006, e_boost=0.0015;
@@ -369,7 +434,7 @@ function simulateCoupled(N=260){
   function norm(arr){ const mn = Math.min(...arr), mx = Math.max(...arr); return arr.map(v => (v - mn) / Math.max(mx - mn, 1e-12)); }
   return { X: [...Array(N)].map((_,i)=>i/(N-1)), I: norm(I), K: norm(K), E: norm(E), A: norm(A), C: norm(C), D: norm(D), P: norm(P) };
 }
-const sim = simulateCoupled(260);
+const sim = simulateCoupled();
 
 // Create a thick line by generating vertices for a ribbon
 function createThickLineGeometry(points, width) {
@@ -496,8 +561,8 @@ function setCurveFromArrays(pair, x01, y01, progress){
   }
   
   // Create thick line geometries
-  const lineWidth = 0.02;  // Adjust this value to change line thickness
-  const haloWidth = lineWidth * 1.5;
+  const lineWidth = SIMULATION_CONSTANTS.CURVE_WIDTH;
+  const haloWidth = lineWidth * SIMULATION_CONSTANTS.HALO_MULTIPLIER;
   
   const g = createThickLineGeometry(points, lineWidth);
   const h = createThickLineGeometry(points, haloWidth);
@@ -505,10 +570,19 @@ function setCurveFromArrays(pair, x01, y01, progress){
   const h2 = createThickLineGeometry(points, haloWidth * 2.2);
   const h3 = createThickLineGeometry(points, haloWidth * 4.0);
 
-  if (pair.line.geometry) pair.line.geometry.dispose();
-  if (pair.halo && pair.halo.geometry) pair.halo.geometry.dispose();
-  if (pair.halo2 && pair.halo2.geometry) pair.halo2.geometry.dispose();
-  if (pair.halo3 && pair.halo3.geometry) pair.halo3.geometry.dispose();
+  // Properly dispose of old geometries to prevent memory leaks
+  if (pair.line.geometry) {
+    pair.line.geometry.dispose();
+  }
+  if (pair.halo && pair.halo.geometry) {
+    pair.halo.geometry.dispose();
+  }
+  if (pair.halo2 && pair.halo2.geometry) {
+    pair.halo2.geometry.dispose();
+  }
+  if (pair.halo3 && pair.halo3.geometry) {
+    pair.halo3.geometry.dispose();
+  }
 
   pair.line.geometry = g;
   pair.halo.geometry = h;
@@ -627,7 +701,9 @@ function placeLabelAtEnd(pair, sprite, dx=0.05, dy=0.03, isData=false){
     // DRAW LEADER LINE FROM CURVE TO LABEL
     const leaderPoints = [new THREE.Vector3(endX, endY, 0), new THREE.Vector3(computeX + 0.2, computeY - 0.3, 0)];
     const leaderGeo = new THREE.BufferGeometry().setFromPoints(leaderPoints);
-    if (dataLeader.geometry) dataLeader.geometry.dispose();
+    if (dataLeader.geometry) {
+      dataLeader.geometry.dispose();
+    }
     dataLeader.geometry = leaderGeo;
     dataLeader.visible = true;
     dataLeader.material.needsUpdate = true;
