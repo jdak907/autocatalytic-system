@@ -25,12 +25,12 @@
   .title { 
     justify-self: flex-start; text-align: left; 
     font-size: 40px; font-weight: 700; letter-spacing: 0.05em;
-    color: #00ff41; /* CRT GREEN */
+    color: #00FF8C; /* CRT GREEN (Cyan Green) */
     text-shadow: 
-      0 0 4px rgba(0,255,65,0.6),
-      0 0 8px rgba(0,255,65,0.54),
-      0 0 12px rgba(0,255,65,0.48),
-      0 0 16px rgba(0,255,65,0.42);
+      0 0 4px rgba(0,255,140,0.6),
+      0 0 8px rgba(0,255,140,0.54),
+      0 0 12px rgba(0,255,140,0.48),
+      0 0 16px rgba(0,255,140,0.42);
     opacity: 1 !important;
     line-height: 1.1; /* Add tighter line spacing */
     margin: 0; /* Remove any default margins */
@@ -44,13 +44,13 @@
   }
   .equations { 
     font-size: 30px; line-height: 1.6; text-align: left;
-    color: #00ff41; /* CRT GREEN */
+    color: #00A67E; /* CRT GREEN (updated) */
     text-shadow: 
-      0 0 4px rgba(0,255,65,1.0),   /* Tight, intense glow */
-      0 0 8px rgba(0,255,65,0.9),   /* Near glow */
-      0 0 12px rgba(0,255,65,0.8),  /* Mid glow */
-      0 0 16px rgba(0,255,65,0.7),  /* Far glow */
-      0 0 24px rgba(0,255,65,0.6);  /* Ambient glow */
+      0 0 4px rgba(0,166,126,1.0),   /* Tight, intense glow */
+      0 0 8px rgba(0,166,126,0.9),   /* Near glow */
+      0 0 12px rgba(0,166,126,0.8),  /* Mid glow */
+      0 0 16px rgba(0,166,126,0.7),  /* Far glow */
+      0 0 24px rgba(0,166,126,0.6);  /* Ambient glow */
     opacity: 1 !important;
     /* NO BORDER, NO BACKGROUND, NO PADDING */
   }
@@ -60,12 +60,12 @@
     text-align: center; 
     opacity: 0; transition: opacity .35s ease; 
     font-size: 30px; 
-    color: #00ff41; /* CRT GREEN */
+    color: #00A67E; /* CRT GREEN (updated) */
     text-shadow: 
-      0 0 4px rgba(0,255,65,0.6),
-      0 0 8px rgba(0,255,65,0.54),
-      0 0 12px rgba(0,255,65,0.48),
-      0 0 16px rgba(0,255,65,0.42);
+      0 0 4px rgba(0,166,126,0.6),
+      0 0 8px rgba(0,166,126,0.54),
+      0 0 12px rgba(0,166,126,0.48),
+      0 0 16px rgba(0,166,126,0.42);
     margin: 0 auto;
   }
 
@@ -102,13 +102,13 @@
 <body>
 <!-- START OVERLAY - FIRST THING USER SEES -->
 <div id="startOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; gap:20px;">
-  <div style="font-size:32px; font-weight:700; color:#00ff41; text-shadow:0 0 20px rgba(0,255,65,0.8); letter-spacing:0.1em; margin-bottom:10px;">
-    AUTOCATALYTIC SYSTEM (IMPROBABILITY DRIVE NOT INCLUDED)
+  <div style="font-size:32px; font-weight:700; color:#00A67E; text-shadow:0 0 20px rgba(0,166,126,0.8); letter-spacing:0.1em; margin-bottom:10px;">
+    AUTOCATALYTIC SYSTEM
   </div>
-  <button id="startBtn" style="font-size:24px; padding:20px 50px; background:#00ff41; color:#000; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:0 0 40px rgba(0,255,65,0.7); transition:all 0.3s ease;">
+  <button id="startBtn" style="font-size:24px; padding:20px 50px; background:#00A67E; color:#000; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:0 0 40px rgba(0,166,126,0.7); transition:all 0.3s ease;">
     ACTIVATE
   </button>
-  <div style="font-size:14px; color:#7ec7ff; opacity:0.7; margin-top:10px;">
+  <div style="font-size:14px; color:#4AA3FF; opacity:0.7; margin-top:10px;">
     Calm British narration engaged.
   </div>
 </div>
@@ -561,13 +561,13 @@ function makeLeaderLine(color, thickness=0.012){  // Increased thickness
 }
 
 const labelSprites = {
-  I: makeTextSprite("AI capability", "#f6b73b", 0.98), 
-  K: makeTextSprite("Carrying capacity", "#7ec7ff", 0.98),
-  E: makeTextSprite("Energy budget", "#10b981", 0.98), 
-  A: makeTextSprite("Algorithms", "#fff176", 0.98),
-  C: makeTextSprite("Compute", "#86a3ff", 0.98), 
-  D: makeTextSprite("Data", "#ff8f7d", 0.98),
-  P: makeTextSprite("Productivity (P)", "#ff80d8", 0.98)
+  I: makeTextSprite("AI CAPABILITY", "#f6b73b", 0.98), 
+  K: makeTextSprite("CARRYING CAPACITY", "#7ec7ff", 0.98),
+  E: makeTextSprite("ENERGY BUDGET", "#10b981", 0.98), 
+  A: makeTextSprite("ALGORITHMS", "#fff176", 0.98),
+  C: makeTextSprite("COMPUTE", "#86a3ff", 0.98), 
+  D: makeTextSprite("DATA", "#ff8f7d", 0.98),
+  P: makeTextSprite("PRODUCTIVITY (P)", "#ff80d8", 0.98)
 };
 // Anchor label sprites so their left edge pins to the X coordinate (left-middle)
 Object.values(labelSprites).forEach(s=>{
@@ -583,15 +583,15 @@ const dataLeader = makeLeaderLine(colors.D);
 const legendGroup = new THREE.Group(); legendGroup.renderOrder=9; scene.add(legendGroup);
 function refreshLegend(){
   while (legendGroup.children.length) legendGroup.remove(legendGroup.children[0]);
-  const baseX = 3.0, baseY = -1.2, dy = 0.25;  // Moved further left for alignment
+  const baseX = 3.0, baseY = -0.75, dy = 0.25;  // Moved further left for alignment
   [
-    {text:"I(t) — AI capability", color:"#f6b73b"},
-    {text:"K(t) — Carrying capacity", color:"#7ec7ff"},
-    {text:"E(t) — Energy budget", color:"#10b981"},
-    {text:"A(t) — Algorithms", color:"#fff176"},
-    {text:"C(t) — Compute", color:"#86a3ff"},
-    {text:"D(t) — Data", color:"#ff8f7d"},
-    {text:"P(t) — Productivity", color:"#ff80d8"}
+    {text:"I(t) — AI CAPABILITY", color:"#f6b73b"},
+    {text:"K(t) — CARRYING CAPACITY", color:"#7ec7ff"},
+    {text:"E(t) — ENERGY BUDGET", color:"#10b981"},
+    {text:"A(t) — ALGORITHMS", color:"#fff176"},
+    {text:"C(t) — COMPUTE", color:"#86a3ff"},
+    {text:"D(t) — DATA", color:"#ff8f7d"},
+    {text:"P(t) — PRODUCTIVITY", color:"#ff80d8"}
   ].forEach((it,i)=>{
     const s = makeTextSprite(it.text, it.color, 0.95, 0.008);
     // Anchor sprite at left-middle so the left edge pins to the X coordinate
@@ -663,17 +663,32 @@ async function setHUD(captionText){
     [eqBox1, eqBox2].forEach(box => {
       const svgs = box.getElementsByTagName('svg');
       for (const svg of svgs) {
-        svg.style.filter = 'drop-shadow(0 0 4px rgba(0,255,65,0.6)) ' +  /* Reduced from 1.0 */
-                          'drop-shadow(0 0 8px rgba(0,255,65,0.54)) ' +  /* Reduced from 0.9 */
-                          'drop-shadow(0 0 12px rgba(0,255,65,0.48)) ' +  /* Reduced from 0.8 */
-                          'drop-shadow(0 0 16px rgba(0,255,65,0.42))';
+  svg.style.filter = 'drop-shadow(0 0 4px rgba(0,166,126,0.6)) ' +
+        'drop-shadow(0 0 8px rgba(0,166,126,0.54)) ' +
+        'drop-shadow(0 0 12px rgba(0,166,126,0.48)) ' +
+        'drop-shadow(0 0 16px rgba(0,166,126,0.42))';
       }
     });
   } catch(e){}
 }
 
 /* ========= 35-SECOND TIMELINE ========= */
-const T0=0, T1=5, T2=10, T3=16, T4=30, T5=33, T6=35;
+// Voice segment durations (in seconds) - measured from the voice lines
+const V1_DUR = 8.0;  // "Oh wonderful..." duration
+const V2_DUR = 8.0;  // "I is AI capability..." duration
+const V3_DUR = 5.0;  // "Then we have A for algorithms..." duration
+const V4_DUR = 6.0;  // "And finally, P for productivity..." duration
+const V5_DUR = 8.0;  // "So there you have it..." duration
+
+// Timeline points - each Ti is when segment i starts
+const T0=0, 
+      T1=T0+8,                    // Start first voice after 1s
+      T2=T1+V1_DUR+4,            // Start second after first voice + 1s gap
+      T3=T2+V2_DUR+8,            // Start third after second voice + 1s gap
+      T4=T3+V3_DUR+4,            // Start fourth after third voice + 1s gap
+      T5=T4+V4_DUR+1,            // Start fifth after fourth voice + 1s gap
+      T6=T5+V5_DUR+1;            // End after fifth voice + 1s gap
+
 let startTime=performance.now();
 
 // Initialize but don't start until button clicked
@@ -719,7 +734,7 @@ function render(){
   if (t > T6){ reset(true); return; }
 
   // SLOW CURVE ANIMATION (0.15 → 1.0 over 20s)
-  const curveProgress = Math.min(1.0, 0.15 + 0.85 * smooth(Math.min(1, t/20)));
+  const curveProgress = Math.min(1.0, 0.15 + 0.85 * smooth(Math.min(1, t/30)));
   Object.keys(pairs).forEach(key => setCurveFromArrays(pairs[key], sim.X, sim[key], curveProgress));
   updateLabels();
 
@@ -731,27 +746,27 @@ function render(){
   xHalo.material.opacity = yHalo.material.opacity = 0.16 * axEase;
 
   // TIMELINE - AUTO VOICE TRIGGERS
-  if (t>=T0 && t<T1){
+  if (t>=T0 && t<T1+V1_DUR){  // Show for duration of first voice
     setHUD("Oh, wonderful. Another human-AI feedback loop. As if the universe wasn't complicated enough.");
     voTitle.trigger(t>=T0, ()=>{ speak("Oh, wonderful. Another human-AI feedback loop. As if the universe wasn't complicated enough."); });
   }
 
-  if (t>=T1 && t<T2){
+  if (t>=T1 && t<T2+V2_DUR){  // Show for duration of second voice
     setHUD("I = AI capability | K = carrying capacity ceiling | E = energy budget");
     voCore.trigger(t>=T1, ()=>{ speak("I, is A.I. capability, growing but limited by K, the carrying capacity ceiling. E is the energy budget, which... surprisingly, doesn't last forever."); });
   }
 
-  if (t>=T2 && t<T3){
+  if (t>=T2 && t<T3+V3_DUR){  // Show for duration of third voice
     setHUD("A = algorithms | C = compute power | D = data quality");
     voResources.trigger(t>=T2, ()=>{ speak("Then we have A for algorithms, C for compute power, and D for data. Because apparently we need ALL of them to do anything useful."); });
   }
 
-  if (t>=T3 && t<T4){
+  if (t>=T3 && t<T4+V4_DUR){  // Show for duration of fourth voice
     setHUD("P = productivity: γ A^α C^χ D^η accelerates I and raises K");
     voEquation.trigger(t>=T3, ()=>{ speak("And finally, P for productivity: gamma times algorithms to the alpha, compute to the chi, data to the eta. P multiplies them all together, then accelerates I and raises K. Because why make it simple?"); });
   }
 
-  if (t>=T5 && t<T6){
+  if (t>=T5 && t<T6+V5_DUR){  // Show for duration of fifth voice
     setHUD("Feedback loop: capability ↔ capacity | resources → growth");
     voWrap.trigger(t>=T5, ()=>{ speak("So there you have it. Capability pushes the ceiling, the ceiling enables capability. Resources feed productivity, productivity feeds everything. Another pointless cycle in an utterly pointless universe."); });
   }
