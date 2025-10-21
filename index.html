@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Feedback System — Coupled Dynamics (Normalized)</title>
+<style>
+  html, body { margin:0; height:100%; background:#000; color:#fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
+  #app { position:fixed; inset:0; }
+
+  .hud { 
+    position: fixed; inset: 0; pointer-events: none; 
+    display: flex; flex-direction: column; padding: 20px; gap: 8px;
+    justify-content: space-between;
+  }
+  
+  /* BIGGER TITLE - CRT GREEN */
+  .title { 
+    justify-self: flex-start; text-align: left; 
+    font-size: 28px; font-weight: 700; letter-spacing: 0.05em;
+    color: #00ff41; /* CRT GREEN */
+    text-shadow: 
+      0 0 8px rgba(0,255,65,0.6),
+      0 0 16px rgba(0,255,65,0.3);
+    opacity: 1 !important;
+  }
+
+  /* EQUATIONS - LEFT SIDE - NO BOXES - CRT GREEN */
+  .equations-container {
+    justify-self: flex-start; 
+    display: flex; flex-direction: column; gap: 12px;
+    opacity: 1 !important; align-self: flex-start;
+  }
+  .equations { 
+    font-size: 20px; line-height: 1.6; text-align: left;
+    color: #00ff41; /* CRT GREEN */
+    text-shadow: 
+      0 0 6px rgba(0,255,65,0.5),
+      0 0 12px rgba(0,255,65,0.2);
+    /* NO BORDER, NO BACKGROUND, NO PADDING */
+  }
+
+  /* CAPTION - BOTTOM CENTER - CRT GREEN */
+  .caption { 
+    text-align: center; 
+    opacity: 0; transition: opacity .35s ease; 
+    font-size: 20px; 
+    color: #00ff41; /* CRT GREEN */
+    text-shadow: 
+      0 0 6px rgba(0,255,65,0.6),
+      0 0 12px rgba(0,255,65,0.3);
+    margin: 0 auto;
+  }
+
+  .badge { position: fixed; top: 16px; left: 16px; font-size: 12px; opacity: .8; letter-spacing: .08em;
+    background: rgba(16,32,48,.3); padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(120,220,255,.25); backdrop-filter: blur(6px);
+    box-shadow: 0 0 14px rgba(120,220,255,.18); }
+  .controls { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; pointer-events: all; }
+  .btn { font-size: 12px; color: #cfefff; background: rgba(16,32,48,.35); border: 1px solid rgba(120,220,255,.35);
+    padding: 6px 10px; border-radius: 999px; cursor: pointer; transition: .2s ease; user-select: none;
+    box-shadow: 0 0 10px rgba(120,220,255,.15), inset 0 0 10px rgba(120,220,255,.08); }
+  .btn:hover { background: rgba(20,40,60,.55); color: #fff; }
+
+  .crt {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2;
+    background:
+      radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.75) 100%),
+      repeating-linear-gradient(to bottom, rgba(255,255,255,0.04) 0, rgba(255,255,255,0.04) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
+    mix-blend-mode: screen;
+    opacity: .25;
+    animation: crtFlicker 3.5s infinite steps(60, end);
+  }
+  @keyframes crtFlicker { 0% { opacity:.24 } 50%{ opacity:.28 } 100%{ opacity:.24 } }
+</style>
+
+<script>
+  window.MathJax = {
+    tex: {inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$','$$']]},
+    svg: {fontCache: 'global'}
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" defer></script>
+</head>
+<body>
+<div id="app"></div>
+<div class="crt"></div>
+
+<div class="controls">
+  <div class="btn" id="restartBtn">Restart</div>
+  <div class="btn" id="voiceBtn">🔇 Voice: On</div>
+</div>
+
+<div class="hud">
+  <div class="title">AUTOCATALYTIC SYSTEM</div>
+  <div class="title">AI FEEDBACK LOOP</div>
+
+  <div class="equations-container">
+    <div class="equations" id="eqBox1"></div>
+    <div class="equations" id="eqBox2"></div>
+  </div>
+  
+  <div class="caption" id="caption"></div>
+</div>
+
+<script type="module">
+import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
+
+const app = document.getElementById('app');
+const captionEl = document.getElementById('caption');
+const eqBox1 = document.getElementById('eqBox1');
+const eqBox2 = document.getElementById('eqBox2');
+const restartBtn = document.getElementById('restartBtn');
+const voiceBtn = document.getElementById('voiceBtn');
+
+/* ========= MathJax ========= */
+let mathReady = false;
+window.addEventListener("load", () => {
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise().then(() => { mathReady = true; });
+  }
+});
+
+/* ========= AUTO-PLAY VOICE ========= */
+let speakOn = true;
+let audioUnlocked = false;
+
+// AUTO-UNLOCK AUDIO STRATEGY
+function unlockAudio() {
+  if (audioUnlocked) return;
+  
+  // METHOD 1: Create silent audio to trigger user gesture
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioContext.state === 'suspended') {
+    audioContext.resume().then(() => {
+      audioUnlocked = true;
+      startVoice();
+    });
+  } else {
+    audioUnlocked = true;
+    startVoice();
+  }
+}
+
+// AUTO-START VOICE
+function startVoice() {
+  if (!audioUnlocked || !speakOn) return;
+  
+  // IMMEDIATELY START FIRST LINE
+  setTimeout(() => speak("Oh, wonderful. Another human-AI feedback loop. As if the universe wasn't complicated enough."), 100);
+}
+
+// TRIGGER ON LOAD + VISIBILITY
+window.addEventListener('load', unlockAudio);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && audioUnlocked) startVoice();
+});
+
+function getVoices(){ return (window.speechSynthesis?.getVoices?.() || []); }
+function pickDeeperBritish(voices){
+  return (
+    voices.find(v => v.name === "Google UK English Male") ||
+    voices.find(v => /en-GB/i.test(v.lang) && /(Male|George|Brian|Daniel)/i.test(v.name)) ||
+    voices.find(v => /Microsoft (George|Hazel)/i.test(v.name)) ||
+    voices.find(v => /en-GB/i.test(v.lang)) ||
+    voices[0] || null
+  );
+}
+function speak(text){
+  if(!speakOn || !('speechSynthesis' in window) || !audioUnlocked || !text) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.9; u.pitch = 0.8; u.volume = 1.0;
+  const v = pickDeeperBritish(getVoices());
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function stopSpeak(){ if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => getVoices();
+
+// NO NEED FOR CLICK - AUTO STARTS
+
+/* ========= Three.js ========= */
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 1);
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+let camera;
+function makeOrthoCamera(){
+  const aspect = window.innerWidth / window.innerHeight;
+  const viewHeight = 6;
+  const viewWidth  = viewHeight * aspect;
+  camera = new THREE.OrthographicCamera(-viewWidth/2, viewWidth/2, viewHeight/2, -viewHeight/2, 0.1, 100);
+  camera.position.set(0, 0, 10);
+  camera.lookAt(0, 0, 0);
+}
+makeOrthoCamera();
+
+/* ========= Starfield ========= */
+(function starfield(){
+  const count = 1400;
+  const positions = new Float32Array(count * 3);
+  for (let i=0;i<count;i++){
+    positions[3*i+0] = (Math.random()*2-1) * 22;
+    positions[3*i+1] = (Math.random()*2-1) * 12;
+    positions[3*i+2] = -12 - Math.random()*10;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    size: 0.07, sizeAttenuation: false,
+    color: 0x9fdcff, transparent: true, opacity: 0.9,
+    depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  const stars = new THREE.Points(geo, mat);
+  stars.renderOrder = -10;
+  scene.add(stars);
+
+  function drift(){
+    const p = geo.getAttribute('position');
+    for (let i=0;i<p.count;i++){
+      let x = p.getX(i) + 0.002 + (p.getZ(i)*0.00002);
+      if (x > 24) x = -24;
+      p.setX(i, x);
+    }
+    p.needsUpdate = true;
+    requestAnimationFrame(drift);
+  }
+  drift();
+})();
+
+/* ========= Grid & Axes ========= */
+function glowLine(points, color=0xa8f6ff, opacity=0.6, haloOpacity=0.18, thickness=0.008){
+  const g = new THREE.BufferGeometry().setFromPoints(points);
+  const m = new THREE.LineBasicMaterial({ 
+    color, transparent:true, opacity, 
+    depthTest:false, blending:THREE.AdditiveBlending,
+    linewidth: thickness * renderer.getPixelRatio()
+  });
+  const l = new THREE.Line(g,m); l.renderOrder = 1; scene.add(l);
+
+  const g2 = g.clone();
+  const m2 = new THREE.LineBasicMaterial({ 
+    color, transparent:true, opacity: haloOpacity, 
+    depthTest:false, blending:THREE.AdditiveBlending,
+    linewidth: thickness * 1.5 * renderer.getPixelRatio()
+  });
+  const h = new THREE.Line(g2,m2); h.renderOrder = 0; scene.add(h);
+  return [l,h];
+}
+
+const grid = new THREE.GridHelper(10, 20, 0x7de7ff, 0x7de7ff);
+grid.rotation.x = Math.PI/2;
+grid.material.transparent = true; 
+grid.material.opacity = 0.12; 
+grid.material.linewidth = 0.012 * renderer.getPixelRatio();
+grid.renderOrder = 0; 
+scene.add(grid);
+
+const [xAxis, xHalo] = glowLine([new THREE.Vector3(-4.8,0,0), new THREE.Vector3(4.8,0,0)], 0xa8f6ff, .6, .18, 0.010);
+const [yAxis, yHalo] = glowLine([new THREE.Vector3(0,-3,0), new THREE.Vector3(0,3,0)], 0xa8f6ff, .6, .18, 0.010);
+
+(function addTicks(){
+  for (let i=-4;i<=4;i++){
+    glowLine([new THREE.Vector3(i,-.08,0), new THREE.Vector3(i,.08,0)], 0x9dfcff, .24, .10, 0.006);
+    glowLine([new THREE.Vector3(-.08, i*0.6, 0), new THREE.Vector3(.08, i*0.6, 0)], 0x9dfcff, .24, .10, 0.006);
+  }
+})();
+
+/* ========= Simulation & Curves ========= */
+function smooth(u){ return u<0?0:u>1?1:(u*u*(3-2*u)); }
+const centerX = -4.5/2;
+function xyFromNormalized(x01, y01){
+  const Xmax=4.5, Ymax=3.0, Ymin=-3.0;
+  return [centerX + Xmax*x01, Ymin + (Ymax - Ymin)*y01];
+}
+
+function simulateCoupled(N=260){
+  const I = new Array(N).fill(0), K = new Array(N).fill(0), E = new Array(N).fill(0), A = new Array(N).fill(0),
+        C = new Array(N).fill(0), D = new Array(N).fill(0), P = new Array(N).fill(0);
+  I[0]=0.12; K[0]=0.78; E[0]=0.14; A[0]=0.15; C[0]=0.16; D[0]=0.14;
+  const r=0.015, p_eff=0.65, k_relax=0.04, K_target0=0.56, k_raise_I=0.0025, k_raise_P=0.0035;
+  const a_growth=0.010, a_sat=1.0, a_boost=0.0008, c_invest=0.020, c_dep=0.004;
+  const d_acc=0.018, d_decay=0.003, e_in=0.004, e_use=0.006, e_boost=0.0015;
+  const gamma=1.0, alpha=0.45, chi=0.40, eta=0.35;
+  const dt=1.0;
+  for (let i=0;i<N-1;i++){
+    P[i] = gamma * Math.pow(A[i],alpha) * Math.pow(C[i],chi) * Math.pow(D[i],eta);
+    const dI = r * I[i] * (1 - I[i]/Math.max(K[i],1e-6)) * (1 + p_eff * P[i]);
+    const dK = k_relax*(K_target0 - K[i]) + k_raise_I*I[i] + k_raise_P*P[i];
+    const dA = a_growth*(a_sat - A[i]) + a_boost*I[i];
+    const dC = c_invest*I[i] - c_dep*C[i];
+    const dD = d_acc*I[i] - d_decay*D[i];
+    const dE = e_in + e_boost*P[i] - e_use*(C[i] + I[i]);
+    I[i+1] = Math.max(1e-6, I[i] + dI*dt);
+    K[i+1] = Math.max(1e-6, K[i] + dK*dt);
+    A[i+1] = Math.max(1e-6, Math.min(1.5, A[i] + dA*dt));
+    C[i+1] = Math.max(1e-6, C[i] + dC*dt);
+    D[i+1] = Math.max(1e-6, D[i] + dD*dt);
+    E[i+1] = Math.max(1e-6, E[i] + dE*dt);
+  }
+  P[N-1] = gamma * Math.pow(A[N-1],alpha) * Math.pow(C[N-1],chi) * Math.pow(D[N-1],eta);
+  function norm(arr){ const mn = Math.min(...arr), mx = Math.max(...arr); return arr.map(v => (v - mn) / Math.max(mx - mn, 1e-12)); }
+  return { X: [...Array(N)].map((_,i)=>i/(N-1)), I: norm(I), K: norm(K), E: norm(E), A: norm(A), C: norm(C), D: norm(D), P: norm(P) };
+}
+const sim = simulateCoupled(260);
+
+function makeCurvePair(color=0xffffff, opacity=0.98, haloOpacity=0.24, dashed=false){
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3),3));
+  const m = dashed
+    ? new THREE.LineDashedMaterial({ color, transparent:true, opacity, dashSize:0.15, gapSize:0.10, depthTest:false, blending:THREE.AdditiveBlending, linewidth: 0.012 * renderer.getPixelRatio() })
+    : new THREE.LineBasicMaterial({ color, transparent:true, opacity, depthTest:false, blending:THREE.AdditiveBlending, linewidth: 0.012 * renderer.getPixelRatio() });
+  const line=new THREE.Line(g,m); line.visible=true; line.renderOrder=5; scene.add(line);
+  const gh=new THREE.BufferGeometry(); gh.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3),3));
+  const mh=new THREE.LineBasicMaterial({ color, transparent:true, opacity:haloOpacity, depthTest:false, blending:THREE.AdditiveBlending, linewidth: 0.018 * renderer.getPixelRatio() });
+  const halo=new THREE.Line(gh,mh); halo.visible=true; halo.renderOrder=4; scene.add(halo);
+  return { line, halo, dashed };
+}
+
+function setCurveFromArrays(pair, x01, y01, progress){
+  const N = Math.max(2, Math.floor((sim.X.length-2) * progress) + 2);
+  const arr=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const [x,y]=xyFromNormalized(x01[i], y01[i]);
+    arr[3*i]=x; arr[3*i+1]=y; arr[3*i+2]=0;
+  }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr,3));
+  const h=new THREE.BufferGeometry(); h.setAttribute('position', new THREE.BufferAttribute(arr,3));
+  if (pair.line.geometry) pair.line.geometry.dispose();
+  if (pair.halo.geometry) pair.halo.geometry.dispose();
+  pair.line.geometry=g; pair.halo.geometry=h;
+  if (pair.dashed) pair.line.computeLineDistances();
+}
+
+const colors = { I: 0xf6b73b, K: 0x7ec7ff, E: 0x10b981, A: 0xfff176, C: 0x86a3ff, D: 0xff8f7d, P: 0xff80d8 };
+const pairs = {
+  I: makeCurvePair(colors.I, .98, .26), K: makeCurvePair(colors.K, .98, .26),
+  E: makeCurvePair(colors.E, .98, .24), A: makeCurvePair(colors.A, .98, .22),
+  C: makeCurvePair(colors.C, .98, .22), D: makeCurvePair(colors.D, .98, .22),
+  P: makeCurvePair(colors.P, 1.00, .28, true)
+};
+
+// IMMEDIATELY DRAW 15% OF CURVES
+Object.keys(pairs).forEach(key => {
+  setCurveFromArrays(pairs[key], sim.X, sim[key], 0.15);
+});
+
+// Labels & Legend
+function makeTextSprite(text, color="#ffffff", opacity=1, scale=0.01){
+  const pad=12, c=document.createElement('canvas'), ctx=c.getContext('2d');
+  const fontPx=22; ctx.font=`600 ${fontPx}px Inter, system-ui, sans-serif`;
+  const w=Math.ceil(ctx.measureText(text).width)+pad*2, h=fontPx+pad*2;
+  c.width=w; c.height=h; ctx.font=`600 ${fontPx}px Inter, system-ui, sans-serif`;
+  ctx.shadowColor=`rgba(160,240,255,0.85)`; ctx.shadowBlur=18; ctx.fillStyle=color; ctx.globalAlpha=opacity; ctx.fillText(text, pad, pad+fontPx*0.82);
+  ctx.shadowColor=`rgba(255,255,255,0.35)`; ctx.shadowBlur=8;  ctx.fillText(text, pad, pad+fontPx*0.82);
+  const tex=new THREE.CanvasTexture(c); tex.minFilter=THREE.LinearFilter; tex.anisotropy=8;
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false, blending:THREE.AdditiveBlending}));
+  sprite.scale.set(w*scale, h*scale, 1); sprite.renderOrder=8; return sprite;
+}
+
+// CREATE LEADER LINE FOR DATA LABEL
+function makeLeaderLine(color, thickness=0.006){
+  const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)]);
+  const m = new THREE.LineBasicMaterial({ 
+    color, transparent:true, opacity: 0.8, 
+    depthTest:false, blending:THREE.AdditiveBlending,
+    linewidth: thickness * renderer.getPixelRatio()
+  });
+  const line = new THREE.Line(g, m); line.visible = false; line.renderOrder = 7; scene.add(line);
+  return line;
+}
+
+const labelSprites = {
+  I: makeTextSprite("AI capability", "#f6b73b", 0.98), 
+  K: makeTextSprite("Carrying capacity", "#7ec7ff", 0.98),
+  E: makeTextSprite("Energy budget", "#10b981", 0.98), 
+  A: makeTextSprite("Algorithms", "#fff176", 0.98),
+  C: makeTextSprite("Compute", "#86a3ff", 0.98), 
+  D: makeTextSprite("Data", "#ff8f7d", 0.98),
+  P: makeTextSprite("Productivity (P)", "#ff80d8", 0.98)
+};
+Object.values(labelSprites).forEach(s=>{ s.visible=true; scene.add(s); });
+
+// DATA LEADER LINE
+const dataLeader = makeLeaderLine(colors.D);
+
+const legendGroup = new THREE.Group(); legendGroup.renderOrder=9; scene.add(legendGroup);
+function refreshLegend(){
+  while (legendGroup.children.length) legendGroup.remove(legendGroup.children[0]);
+  const baseX = 3.8, baseY = 2.8, dy = 0.25;
+  [
+    {text:"I(t)  AI capability", color:"#f6b73b"},
+    {text:"K(t)  Carrying capacity", color:"#7ec7ff"},
+    {text:"E(t)  Energy budget", color:"#10b981"},
+    {text:"A(t)  Algorithms", color:"#fff176"},
+    {text:"C(t)  Compute", color:"#86a3ff"},
+    {text:"D(t)  Data", color:"#ff8f7d"},
+    {text:"P(t)  Productivity (dashed)", color:"#ff80d8"}
+  ].forEach((it,i)=>{
+    const s = makeTextSprite(it.text, it.color, 0.95, 0.008);
+    s.position.set(baseX, baseY - i*dy, 0);
+    legendGroup.add(s);
+  });
+}
+refreshLegend();
+
+function placeLabelAtEnd(pair, sprite, dx=0.05, dy=0.03, isData=false){
+  const pos = pair.line.geometry.getAttribute('position');
+  if (!pos || pos.count<2) return;
+  
+  let x = pos.getX(pos.count-1) + dx;
+  let y = pos.getY(pos.count-1) + dy;
+  
+  const top = 2.95, right = 4.75;
+  if (y > top) y = top - 0.05;
+  if (x > right) x = right - 0.08;
+  
+  // SPECIAL POSITIONING FOR DATA LABEL - BOTTOM RIGHT + LEADER
+  if (isData) {
+    const endX = pos.getX(pos.count-1);
+    const endY = pos.getY(pos.count-1);
+    sprite.position.set(right - 0.15, -2.4, 0); // BOTTOM RIGHT CORNER
+    
+    // DRAW LEADER LINE
+    const leaderPoints = [new THREE.Vector3(endX, endY, 0), new THREE.Vector3(right - 0.15, -2.4, 0)];
+    const leaderGeo = new THREE.BufferGeometry().setFromPoints(leaderPoints);
+    dataLeader.geometry = leaderGeo;
+    dataLeader.visible = true;
+  } else {
+    sprite.position.set(x, y, 0);
+  }
+  
+  sprite.visible = pair.line.visible && pair.line.material.opacity > 0.05;
+}
+
+function updateLabels(){
+  placeLabelAtEnd(pairs.I, labelSprites.I);
+  placeLabelAtEnd(pairs.K, labelSprites.K);
+  placeLabelAtEnd(pairs.E, labelSprites.E);
+  placeLabelAtEnd(pairs.A, labelSprites.A);
+  placeLabelAtEnd(pairs.C, labelSprites.C);
+  placeLabelAtEnd(pairs.D, labelSprites.D, true); // DATA WITH LEADER
+  placeLabelAtEnd(pairs.P, labelSprites.P);
+}
+
+/* ========= FIXED HUD ========= */
+async function setHUD(captionText){
+  captionEl.textContent = captionText || "";
+  captionEl.style.opacity = captionText ? 1 : 0;
+  
+  // ALWAYS SHOW THESE TWO EQUATIONS ON LEFT - NO BOXES
+  eqBox1.innerHTML = `$$P(t)=\\gamma A^{\\alpha}C^{\\chi}D^{\\eta}$$`;
+  eqBox2.innerHTML = `$$I'(t)=rI\\left(1-\\frac{I}{K}\\right)(1+p_{\\text{eff}}P)$$`;
+  
+  if (mathReady && window.MathJax?.typesetPromise) {
+    try { await MathJax.typesetPromise([eqBox1, eqBox2]); } catch(e){}
+  }
+}
+
+/* ========= 35-SECOND TIMELINE ========= */
+const T0=0, T1=5, T2=10, T3=16, T4=30, T5=33, T6=35;
+let startTime=performance.now();
+
+function makeVoiceGate(){
+  let armedAt = 0, fired = false;
+  return {
+    trigger(gate, fn){
+      if (fired) return;
+      if (!gate){ armedAt = 0; return; }
+      if (!armedAt) armedAt = performance.now();
+      if (performance.now() - armedAt > 450){ fired = true; fn(); }
+    },
+    reset(){ armedAt=0; fired=false; }
+  };
+}
+let voTitle = makeVoiceGate(), voCore = makeVoiceGate(), voResources = makeVoiceGate(), 
+    voEquation = makeVoiceGate(), voWrap = makeVoiceGate();
+
+function reset(looping=false){
+  if (!looping) stopSpeak();
+  startTime = performance.now();
+  
+  // IMMEDIATELY DRAW 15% OF CURVES
+  Object.keys(pairs).forEach(key => setCurveFromArrays(pairs[key], sim.X, sim[key], 0.15));
+  
+  // SHOW EQUATIONS IMMEDIATELY
+  setHUD("");
+  
+  voTitle.reset(); voCore.reset(); voResources.reset(); voEquation.reset(); voWrap.reset();
+}
+
+// AUTO-START ON LOAD
+reset();
+
+// START VOICE IMMEDIATELY
+setTimeout(unlockAudio, 50);
+
+/* ========= Render ========= */
+function render(){
+  requestAnimationFrame(render);
+  let t = (performance.now()-startTime)/1000;
+  if (t > T6){ reset(true); return; }
+
+  // SLOW CURVE ANIMATION (0.15 → 1.0 over 20s)
+  const curveProgress = Math.min(1.0, 0.15 + 0.85 * smooth(Math.min(1, t/20)));
+  Object.keys(pairs).forEach(key => setCurveFromArrays(pairs[key], sim.X, sim[key], curveProgress));
+  updateLabels();
+
+  // GRID/AXES FADE IN
+  const gop = smooth(Math.min(1, t/2.0)) * 0.12;
+  grid.material.opacity = gop;
+  const axEase = smooth(Math.min(1,t/2.5));
+  xAxis.material.opacity = yAxis.material.opacity = 0.45 * axEase;
+  xHalo.material.opacity = yHalo.material.opacity = 0.16 * axEase;
+
+  // TIMELINE - AUTO VOICE TRIGGERS
+  if (t>=T0 && t<T1){
+    setHUD("Oh, wonderful. Another human-AI feedback loop. As if the universe wasn't complicated enough.");
+    voTitle.trigger(t>0.2, ()=>{ speak("Oh, wonderful. Another human-AI feedback loop. As if the universe wasn't complicated enough."); });
+  }
+
+  if (t>=T1 && t<T2){
+    setHUD("I = AI capability | K = carrying capacity ceiling | E = energy budget");
+    voCore.trigger(t>5.2, ()=>{ speak("I is AI capability, growing but limited by K, the carrying capacity ceiling. E is the energy budget, which... surprisingly, doesn't last forever."); });
+  }
+
+  if (t>=T2 && t<T3){
+    setHUD("A = algorithms | C = compute power | D = data quality");
+    voResources.trigger(t>10.2, ()=>{ speak("Then we have A for algorithms, C for compute power, and D for data. Because apparently we need ALL of them to do anything useful."); });
+  }
+
+  if (t>=T3 && t<T4){
+    setHUD("P = productivity: γ A^α C^χ D^η accelerates I and raises K");
+    voEquation.trigger(t>16.2, ()=>{ speak("And finally, P for productivity: gamma times algorithms to the alpha, compute to the chi, data to the eta. P multiplies them all together, then accelerates I and raises K. Because why make it simple?"); });
+  }
+
+  if (t>=T5 && t<T6){
+    setHUD("Feedback loop: capability ↔ capacity | resources → growth");
+    voWrap.trigger(t>33.2, ()=>{ speak("So there you have it. Capability pushes the ceiling, the ceiling enables capability. Resources feed productivity, productivity feeds everything. Another pointless cycle in an utterly pointless universe."); });
+  }
+
+  renderer.render(scene, camera);
+}
+render();
+
+/* ========= Controls ========= */
+window.addEventListener('resize', ()=>{
+  makeOrthoCamera();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  refreshLegend();
+});
+
+restartBtn.addEventListener('click', ()=> {
+  reset();
+  if (audioUnlocked) startVoice();
+});
+
+voiceBtn.addEventListener('click', ()=>{
+  speakOn = !speakOn;
+  voiceBtn.innerHTML = speakOn ? '🔇 Voice: On' : '🔊 Voice: Off';
+  if (!speakOn) stopSpeak();
+  else if (audioUnlocked) startVoice();
+});
+</script>
+</body>
+</html>
